@@ -1,0 +1,50 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="Current" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Compile Update="Forms\Forms_Extra\ProductDetails.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Update="Forms\Forms_Extra\ShoppingCart.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Update="Forms\Login + Register\FormLogin.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Update="Forms\Login + Register\FormLuongChucVu.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Update="Forms\Login + Register\FormRegister.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Update="Forms\Login + Register\FormResetPass.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Update="Forms\Login + Register\FormVerifyOTP.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Update="Forms\Login + Register\PasswordForgot.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Update="Forms\TrangChu.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Update="User Control\UC_Dashboard.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Update="User Control\UC_Extra\UC_ProductCart.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Update="User Control\UC_Extra\UC_Shipping.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Update="User Control\UC_Extra\UC_ShippingCOD.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Update="User Control\UC_Extra\UC_ShopPCart.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Update="User Control\UC_Product.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+  </ItemGroup>
+</Project>

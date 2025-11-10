@@ -210,6 +210,48 @@ BEGIN
 END
 GO
 
+------
+GO
+CREATE OR ALTER TRIGGER trg_CongDiemTichLuy_SauBan
+ON CHITIETHDBAN
+AFTER INSERT, UPDATE, DELETE
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    ;WITH DiemMoi AS (
+        SELECT h.NGUOIMUA_ID,
+               SUM(dbo.ufn_TinhDiemThuong(i.THANHTIEN)) AS Diem
+        FROM inserted i
+        JOIN HDBAN h ON h.MAHD = i.MAHD
+        GROUP BY h.NGUOIMUA_ID
+    ),
+    DiemCu AS (
+        SELECT h.NGUOIMUA_ID,
+               SUM(dbo.ufn_TinhDiemThuong(d.THANHTIEN)) AS Diem
+        FROM deleted d
+        JOIN HDBAN h ON h.MAHD = d.MAHD
+        GROUP BY h.NGUOIMUA_ID
+    ),
+    Delta AS (
+        SELECT COALESCE(m.NGUOIMUA_ID, c.NGUOIMUA_ID) AS NGUOIMUA_ID,
+               COALESCE(m.Diem,0) - COALESCE(c.Diem,0) AS DiemDelta
+        FROM DiemMoi m
+        FULL JOIN DiemCu c ON c.NGUOIMUA_ID = m.NGUOIMUA_ID
+    )
+    UPDATE nd
+    SET nd.DIEMTICHLUY =
+        CASE WHEN ISNULL(nd.DIEMTICHLUY,0) + d.DiemDelta < 0
+             THEN 0
+             ELSE ISNULL(nd.DIEMTICHLUY,0) + d.DiemDelta
+        END
+    FROM NGUOIDUNG nd
+    JOIN Delta d ON d.NGUOIMUA_ID = nd.ID
+    WHERE d.DiemDelta <> 0;
+END;
+GO
+-----
+
 
 /* =======================
    VIEW
@@ -564,6 +606,47 @@ EXEC usp_ThongKeDoanhThu @TuNgay = '2025-09-01', @DenNgay = '2025-10-10';
 
 -----User-defined Function----
 
+GO
+CREATE OR ALTER FUNCTION ufn_TinhDiemThuong
+(
+    @TongTien MONEY
+)
+RETURNS INT
+AS
+BEGIN
+    IF @TongTien IS NULL OR @TongTien <= 0
+        RETURN 0;
+
+    RETURN FLOOR(@TongTien / 10000);
+END;
+GO
+
+GO
+CREATE OR ALTER FUNCTION dbo.ufn_TinhDiemHoaDon (@MaHD VARCHAR(10))
+RETURNS INT
+AS
+BEGIN
+    DECLARE @TongTien MONEY;
+
+    SELECT @TongTien = SUM(THANHTIEN)
+    FROM CHITIETHDBAN
+    WHERE MAHD = @MaHD;
+
+    RETURN dbo.ufn_TinhDiemThuong(@TongTien);
+END;
+GO
+
+
+SELECT 
+    h.MAHD,
+    SUM(ct.THANHTIEN) AS TongTien,
+    dbo.ufn_TinhDiemThuong(SUM(ct.THANHTIEN)) AS DiemThuong
+FROM HDBAN h
+JOIN CHITIETHDBAN ct ON h.MAHD = ct.MAHD
+GROUP BY h.MAHD;
+
+
+
 ----Cursor----
 /*Liệt kê sản phẩm sắp hết hạn (HSD < 30 ngày)*/
 go
@@ -592,6 +675,42 @@ END
 GO
 
 EXEC usp_SanPhamSapHetHan @NgayHetHan = 90;
+
+GO
+CREATE PROCEDURE usp_TongLuongNhanVien
+AS
+BEGIN
+    DECLARE @HoTen NVARCHAR(50),
+            @Luong MONEY,
+            @TongLuong MONEY = 0;
+
+    -- Cursor duyệt tất cả nhân viên có lương
+    DECLARE cur CURSOR FOR
+        SELECT HOTEN, LUONG
+        FROM NGUOIDUNG
+        WHERE MAROLE = 'NV' AND LUONG IS NOT NULL;
+
+    OPEN cur;
+
+    FETCH NEXT FROM cur INTO @HoTen, @Luong;
+    WHILE @@FETCH_STATUS = 0
+    BEGIN
+        PRINT N'Nhân viên: ' + @HoTen + N' | Lương: ' + CAST(@Luong AS NVARCHAR(20));
+        SET @TongLuong = @TongLuong + @Luong;
+        FETCH NEXT FROM cur INTO @HoTen, @Luong;
+    END;
+
+    CLOSE cur;
+    DEALLOCATE cur;
+
+    PRINT N'=========================';
+    PRINT N'Tổng lương toàn bộ nhân viên: ' + CAST(@TongLuong AS NVARCHAR(20));
+END;
+GO
+
+EXEC usp_TongLuongNhanVien;
+
+
 
 
 
